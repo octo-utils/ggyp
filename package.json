@@ -1,6 +1,6 @@
 {
   "name": "ggyp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,6 @@
     "minimatch": "^3.0.4",
     "ramda": "^0.25.0",
     "stack-trace": "0.0.10",
-    "treey": "github:octo-utils/treey#bab12729"
+    "treey": "github:octo-utils/treey#38d4a29"
   }
 }
