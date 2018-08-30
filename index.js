@@ -6,9 +6,9 @@ const globby = require("globby")
 const minimatch = require("minimatch")
 const treey = require("treey")
 const stackTrace = require('stack-trace')
-const cwd = process.cwd();
 
 function fsReadFileSyncCwd(path_relative_to_cwd) {
+  const cwd = process.cwd();
   const full_path = path.isAbsolute(path_relative_to_cwd) ? 
     path_relative_to_cwd : path.join(cwd, path_relative_to_cwd);
   return fs.readFileSync(full_path).toString();
@@ -27,6 +27,7 @@ function _getCallerFileName() {
 }
 
 function base2local_path(except_relative_path) {
+  const cwd = process.cwd();
   let base = path.dirname(_getCallerFileName());
   let result_absolute = path.isAbsolute(except_relative_path) ?
     except_relative_path :
@@ -35,6 +36,7 @@ function base2local_path(except_relative_path) {
 }
 
 function frombase_path(except_relative_path) {
+  const cwd = process.cwd();
   let base = path.dirname(_getCallerFileName());
   let result_absolute = path.isAbsolute(except_relative_path) ?
     except_relative_path :
@@ -50,6 +52,7 @@ function absolute_path(except_relative_path) {
 }
 
 function globby_paths(globby_paths) {
+  const cwd = process.cwd();
   let base = path.dirname(_getCallerFileName() || cwd);
   return globby.sync(globby_paths, { cwd: base });
 }
@@ -64,6 +67,7 @@ const helper_functions = [
 exports.gen = function (config_ggyp, env_vars = {}) {
   const config_ggyp_content = fsReadFileSyncCwd(config_ggyp);
   const S = _createTreeyScope(env_vars);
+  const cwd = process.cwd();
 
   _withProps([
     ["__S", S], // dont want user using root scope directly in the configure ggyp
@@ -201,6 +205,7 @@ function _createTreeyScope(env_vars = {}) {
 }
 
 function _withProps(tokenPropsMap, code_string, filename_) {
+  const cwd = process.cwd();
   const filename__ = path.isAbsolute(filename_) ? filename_ : path.join(cwd, filename_);
   const token = tokenPropsMap.map(([token]) => token);
   const props = tokenPropsMap.map(([token, prop, options = {}]) => prop);
