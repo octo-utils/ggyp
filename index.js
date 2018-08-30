@@ -7,10 +7,10 @@ const minimatch = require("minimatch")
 const treey = require("treey")
 const stackTrace = require('stack-trace')
 
-function fsReadFileSyncCwd(path_relative_to_cwd) {
-  const cwd = process.cwd();
-  const full_path = path.isAbsolute(path_relative_to_cwd) ? 
-    path_relative_to_cwd : path.join(cwd, path_relative_to_cwd);
+function fsReadFileSyncCwd(path_relative_to_cwd, base) {
+  const _base = base || process.cwd();
+  const full_path = path.isAbsolute(path_relative_to_cwd) ?
+    path_relative_to_cwd : path.join(_base, path_relative_to_cwd);
   return fs.readFileSync(full_path).toString();
 }
 
@@ -65,6 +65,7 @@ const helper_functions = [
 ];
 
 exports.gen = function (config_ggyp, env_vars = {}) {
+  const config_ggyp_dir = path.dirname(config_ggyp);
   const config_ggyp_content = fsReadFileSyncCwd(config_ggyp);
   const S = _createTreeyScope(env_vars);
   const cwd = process.cwd();
@@ -78,7 +79,7 @@ exports.gen = function (config_ggyp, env_vars = {}) {
       let base = path.dirname(stackTrace.parse(new Error())[1].fileName);
 
       if (Array.isArray(entry_dir)) {
-        return entry_dir.forEach(entry => _read_and_run_ggyp(S, entry));
+        return entry_dir.forEach(entry => _read_and_run_ggyp(S, entry, config_ggyp_dir));
       }
 
       return _read_and_run_ggyp(S, path.join(entry_dir, "./BUILD.ggyp"));
@@ -119,8 +120,8 @@ exports.gen = function (config_ggyp, env_vars = {}) {
         project_path_relative_to_base, base_relative_to_project_path
       );
 
-      if (variables && typeof variables === "object" 
-          && Object.keys(variables).length > 0) {
+      if (variables && typeof variables === "object"
+        && Object.keys(variables).length > 0) {
         json.variables = variables;
       }
 
@@ -128,7 +129,7 @@ exports.gen = function (config_ggyp, env_vars = {}) {
 
         const _target_info = _rebaseAllPathsBeforeOutput(target_info, assets_base);
 
-        return R.filter(Boolean, { 
+        return R.filter(Boolean, {
           ..._target_info,
           $children: null
         })
@@ -138,7 +139,7 @@ exports.gen = function (config_ggyp, env_vars = {}) {
       if (project_is_includable) {
         suffix = ".gypi";
       }
-      
+
       if (project_info.includes) {
         json.includes = project_info.includes;
       }
@@ -151,9 +152,13 @@ exports.gen = function (config_ggyp, env_vars = {}) {
   });
 }
 
-function _read_and_run_ggyp(S, ggyp_path) {
-  const entry_content = fsReadFileSyncCwd(ggyp_path);
-  _run_ggyp(S, entry_content, ggyp_path);
+function _read_and_run_ggyp(S, ggyp_path, base) {
+  const _base = base || process.cwd();
+  const full_path = path.isAbsolute(ggyp_path) ?
+    ggyp_path : path.join(_base, ggyp_path);
+
+  const entry_content = fsReadFileSyncCwd(full_path);
+  _run_ggyp(S, entry_content, full_path);
 }
 
 function _run_ggyp(S, code_string, ggyp_path) {
@@ -162,7 +167,7 @@ function _run_ggyp(S, code_string, ggyp_path) {
     ["G", S.vars],
     ["target_template", (...args) => S.target_template(...args)],
     ["global", (...args) => S.global(...args)],
-    ["project", (...args) => S.project(...args)],
+    ["project", (...args) => S.project(...args, ggyp_path)],
     ["__curr", path.basename(ggyp_path).replace(/\.ggypi?$/, "")],
     ...helper_functions
   ], code_string, ggyp_path);
@@ -177,9 +182,8 @@ function _createTreeyScope(env_vars = {}) {
     S.vars = global_vars;
   })
 
-  S.def("project", _ => (project_name, defFn) => {
+  S.def("project", _ => (project_name, defFn, ggyp_file_path) => {
     let _defFn = defFn;
-    const ggyp_file_path = _getCallerFileName();
     const project_path = path.dirname(ggyp_file_path);
     S("project", project => {
       project.project_path("");
@@ -229,10 +233,10 @@ function _rebaseAllPathsBeforeOutput(target, rebase_prefix) {
     let value = target[key];
     if (Array.isArray(value)) {
       if ([
-          /.?sources$/,
-          /.?dirs$/,
-          /.?files$/
-        ].some(regex => regex.test(key))) {
+        /.?sources$/,
+        /.?dirs$/,
+        /.?files$/
+      ].some(regex => regex.test(key))) {
         value = value.map(element_path => path.join(rebase_prefix, element_path));
       }
     } else if (typeof value === "object") {
