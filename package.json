@@ -4,15 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/test.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "globby": "^8.0.1",
     "minimatch": "^3.0.4",
+    "object-assign-properties": "0.0.33",
     "ramda": "^0.25.0",
     "stack-trace": "0.0.10",
     "treey": "github:octo-utils/treey#38d4a29"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2"
   }
 }

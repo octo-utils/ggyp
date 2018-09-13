@@ -1,0 +1,9 @@
+{
+  "includes": ["./top.gypi"],
+  "targets": [
+    {
+      "target_name": "some_target"
+    }
+  ]
+  ,"includes": ["./bottom.gypi"]
+}

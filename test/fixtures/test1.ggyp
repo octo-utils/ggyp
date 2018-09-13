@@ -1,0 +1,18 @@
+/* Created by tommyZZM.OSX on 2018/9/13. */
+"use strict";
+
+project(__curr, project => {
+
+  project.includes_top([
+    "./top.gypi"
+  ]);
+
+  project("target", target => {
+    target.target_name("some_target");
+  });
+
+  project.includes_bottom([
+    "./bottom.gypi"
+  ]);
+
+})

@@ -1,0 +1,3 @@
+/* Created by tommyZZM.OSX on 2018/9/13. */
+"use strict";
+$gen(["./test1.ggyp"]);

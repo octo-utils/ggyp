@@ -7,6 +7,9 @@ const minimatch = require("minimatch")
 const treey = require("treey")
 const stackTrace = require('stack-trace')
 
+const regexBlockBefore = _ => /^{/;
+const regexBlockAfter = _ => /}\s*$/;
+
 function fsReadFileSyncCwd(path_relative_to_cwd, base) {
   const _base = base || process.cwd();
   const full_path = path.isAbsolute(path_relative_to_cwd) ?
@@ -140,13 +143,25 @@ exports.gen = function (config_ggyp, env_vars = {}) {
         suffix = ".gypi";
       }
 
-      if (project_info.includes) {
-        json.includes = project_info.includes;
+      let json_str = JSON.stringify(json, null, 2);
+
+      if (project_info.includes_top) {
+        json_str = json_str.replace(regexBlockBefore(), function () {
+          return "{\n" +
+            "  \"includes\": " + JSON.stringify(project_info.includes_top) + ","
+        })
+      }
+
+      if (project_info.includes_bottom) {
+        json_str = json_str.replace(regexBlockAfter(), function () {
+          return "  ,\"includes\": " + JSON.stringify(project_info.includes_bottom) +
+            "\n}\n";
+        })
       }
 
       fs.writeFileSync(
         path.join(project_path, `${project_name}${suffix}`),
-        JSON.stringify(json, null, 2)
+        json_str
       );
     }
   });
